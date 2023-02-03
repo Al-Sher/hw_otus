@@ -2,7 +2,6 @@ package hw02unpackstring
 
 import (
 	"errors"
-	"fmt"
 	"strings"
 	"testing"
 
@@ -51,8 +50,7 @@ func TestUnpackInvalidStringWithAsterisk(t *testing.T) {
 	for _, tc := range invalidStrings {
 		tc := tc
 		t.Run(tc, func(t *testing.T) {
-			tc1, err := Unpack(tc)
-			fmt.Println(tc1)
+			_, err := Unpack(tc)
 			require.Truef(t, errors.Is(err, ErrInvalidString), "actual error %q", err)
 		})
 	}
