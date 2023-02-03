@@ -59,7 +59,7 @@ func TestUnpackInvalidStringWithAsterisk(t *testing.T) {
 }
 
 func TestUnpackWithSymbols(t *testing.T) {
-	var tests = []struct {
+	tests := []struct {
 		input    string
 		excepted string
 		hasError bool
@@ -84,7 +84,7 @@ func TestUnpackWithSymbols(t *testing.T) {
 }
 
 func TestNumberError(t *testing.T) {
-	var tests = []struct {
+	tests := []struct {
 		prev     rune
 		cur      rune
 		hasError bool
@@ -94,7 +94,7 @@ func TestNumberError(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		var testName = []rune{test.prev, test.cur}
+		testName := []rune{test.prev, test.cur}
 		t.Run(string(testName), func(t *testing.T) {
 			err := numberError(test.prev, test.cur)
 			if test.hasError {
@@ -107,7 +107,7 @@ func TestNumberError(t *testing.T) {
 }
 
 func TestRepeatIfNeed(t *testing.T) {
-	var tests = []struct {
+	tests := []struct {
 		prev     rune
 		cur      rune
 		excepted string
@@ -120,7 +120,7 @@ func TestRepeatIfNeed(t *testing.T) {
 
 	for _, test := range tests {
 		var buf strings.Builder
-		var testName = []rune{test.prev, test.cur}
+		testName := []rune{test.prev, test.cur}
 		t.Run(string(testName), func(t *testing.T) {
 			_, err := repeatIfNeed(&buf, test.prev, test.cur)
 			if err != nil {
