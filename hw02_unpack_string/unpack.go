@@ -56,7 +56,7 @@ func Unpack(str string) (string, error) {
 		prevRune = currentRune
 	}
 
-	var lastRune, _ = utf8.DecodeLastRuneInString(str)
+	lastRune, _ := utf8.DecodeLastRuneInString(str)
 
 	if lastRune != '\\' && !unicode.IsDigit(lastRune) && escaped {
 		return "", ErrInvalidString
