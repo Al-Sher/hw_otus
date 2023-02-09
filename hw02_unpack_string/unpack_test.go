@@ -81,29 +81,6 @@ func TestUnpackWithSymbols(t *testing.T) {
 	}
 }
 
-func TestNumberError(t *testing.T) {
-	tests := []struct {
-		prev     rune
-		cur      rune
-		hasError bool
-	}{
-		{'0', '1', true},
-		{'w', '1', false},
-	}
-
-	for _, test := range tests {
-		testName := []rune{test.prev, test.cur}
-		t.Run(string(testName), func(t *testing.T) {
-			err := numberError(test.prev, test.cur)
-			if test.hasError {
-				require.Error(t, err)
-			} else {
-				require.NoError(t, err)
-			}
-		})
-	}
-}
-
 func TestRepeatIfNeed(t *testing.T) {
 	tests := []struct {
 		prev     rune
@@ -118,8 +95,7 @@ func TestRepeatIfNeed(t *testing.T) {
 
 	for _, test := range tests {
 		var buf strings.Builder
-		testName := []rune{test.prev, test.cur}
-		t.Run(string(testName), func(t *testing.T) {
+		t.Run(test.excepted, func(t *testing.T) {
 			_, err := repeatIfNeed(&buf, test.prev, test.cur)
 			if err != nil {
 				require.Fail(t, err.Error())

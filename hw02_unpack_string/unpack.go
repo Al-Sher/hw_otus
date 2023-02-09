@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 	"unicode"
+	"unicode/utf8"
 )
 
 // ErrInvalidString ошибка для некорректной строки.
@@ -12,77 +13,72 @@ var ErrInvalidString = errors.New("invalid string")
 
 // Unpack функция распаковки строки.
 func Unpack(str string) (string, error) {
-	r := []rune(str)
-	var result strings.Builder
-	escaped := false
-
-	if len(r) == 0 {
+	if str == "" {
 		return "", nil
 	}
 
-	if unicode.IsDigit(r[0]) {
+	prevRune, firstRuneLen := utf8.DecodeRuneInString(str)
+	if unicode.IsDigit(prevRune) || (prevRune == utf8.RuneError && firstRuneLen == 1) {
 		return "", ErrInvalidString
 	}
 
-	for i := 1; i < len(r); i++ {
-		if r[i-1] == '\\' && !escaped {
+	var result strings.Builder
+	escaped := false
+	str = str[firstRuneLen:]
+
+	for _, currentRune := range str {
+		if prevRune == '\\' && !escaped {
 			escaped = true
+			prevRune = currentRune
 			continue
 		}
 
-		if err := escapedError(r[i-1]); escaped && err != nil {
-			return "", err
+		if escaped && prevRune != '\\' && !unicode.IsDigit(prevRune) {
+			return "", ErrInvalidString
 		}
 
-		if err := numberError(r[i-1], r[i]); !escaped && err != nil {
-			return "", err
+		if !escaped && unicode.IsDigit(prevRune) && unicode.IsDigit(currentRune) {
+			return "", ErrInvalidString
 		}
 
-		repeat, err := repeatIfNeed(&result, r[i-1], r[i])
+		repeat, err := repeatIfNeed(&result, prevRune, currentRune)
 		if err != nil {
 			return "", err
 		}
 		if repeat {
 			escaped = false
+			prevRune = currentRune
 			continue
 		}
 
-		writeSymbol(&result, escaped, r[i-1])
+		writeSymbol(&result, escaped, prevRune)
 		escaped = false
+		prevRune = currentRune
 	}
 
-	if err := escapedError(r[len(r)-1]); escaped && err != nil {
-		return "", err
+	var lastRune, _ = utf8.DecodeLastRuneInString(str)
+
+	if lastRune != '\\' && !unicode.IsDigit(lastRune) && escaped {
+		return "", ErrInvalidString
 	}
 
-	writeSymbol(&result, escaped, r[len(r)-1])
+	writeSymbol(&result, escaped, lastRune)
 
 	return result.String(), nil
 }
 
-// numberError функция для проверки на ошибку, в случае если два символа подряд
-// являются цифрами.
-func numberError(prevSymbol, currentSymbol rune) error {
-	if unicode.IsDigit(prevSymbol) && unicode.IsDigit(currentSymbol) {
-		return ErrInvalidString
-	}
-
-	return nil
-}
-
 // repeatIfNeed функция для повтора символа, если текущий символ является числом.
 func repeatIfNeed(buf *strings.Builder, prevSymbol, currentSymbol rune) (bool, error) {
-	if unicode.IsDigit(currentSymbol) {
-		n, err := strconv.Atoi(string(currentSymbol))
-		if err != nil {
-			return false, err
-		}
-		buf.WriteString(strings.Repeat(string(prevSymbol), n))
-
-		return true, nil
+	if !unicode.IsDigit(currentSymbol) {
+		return false, nil
 	}
 
-	return false, nil
+	n, err := strconv.Atoi(string(currentSymbol))
+	if err != nil {
+		return false, err
+	}
+	buf.WriteString(strings.Repeat(string(prevSymbol), n))
+	return true, nil
 }
 
 // writeSymbolIsNotDigit функция записи в буфер, в случае если символ не является числом.
@@ -90,13 +86,4 @@ func writeSymbol(buf *strings.Builder, escaped bool, symbol rune) {
 	if !unicode.IsDigit(symbol) || escaped {
 		buf.WriteString(string(symbol))
 	}
-}
-
-// escapedError функция проверки, что следующий символ после слэша является валидным.
-func escapedError(symbol rune) error {
-	if symbol != '\\' && !unicode.IsDigit(symbol) {
-		return ErrInvalidString
-	}
-
-	return nil
 }
