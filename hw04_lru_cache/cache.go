@@ -1,6 +1,8 @@
 package hw04lrucache
 
-import "sync"
+import (
+	"sync"
+)
 
 // Key ключ для кэша.
 type Key string
@@ -20,6 +22,12 @@ type lruCache struct {
 	mu       *sync.RWMutex
 }
 
+// cacheItem структура элемента кэша для хранения ключа.
+type cacheItem struct {
+	val interface{}
+	key Key
+}
+
 // NewCache создать новый кэш.
 func NewCache(capacity int) Cache {
 	return &lruCache{
@@ -32,20 +40,21 @@ func NewCache(capacity int) Cache {
 
 // Set установить значение кэша.
 func (c *lruCache) Set(key Key, value interface{}) bool {
-	defer c.mu.Unlock()
 	c.mu.Lock()
+	defer c.mu.Unlock()
 	if el, ok := c.items[key]; ok {
-		el.Value = value
-		c.queue.MoveToFront(el)
+		c.changeElement(el, value)
 		return true
 	}
-	el := c.queue.PushFront(value)
+	item := &cacheItem{
+		key: key,
+		val: value,
+	}
+	el := c.queue.PushFront(item)
 	c.items[key] = el
 
 	if c.queue.Len() > c.capacity {
-		lastElement := c.queue.Back()
-		c.queue.Remove(lastElement)
-		c.dropFromMap(lastElement)
+		c.deleteLastElement()
 	}
 
 	return false
@@ -53,11 +62,12 @@ func (c *lruCache) Set(key Key, value interface{}) bool {
 
 // Get получить значение кэша по ключу.
 func (c *lruCache) Get(key Key) (interface{}, bool) {
-	defer c.mu.RUnlock()
 	c.mu.RLock()
+	defer c.mu.RUnlock()
 	if el, ok := c.items[key]; ok {
 		c.queue.MoveToFront(el)
-		return el.Value, true
+		item := convertListItemToCacheItem(el)
+		return item.val, true
 	}
 
 	return nil, false
@@ -65,17 +75,33 @@ func (c *lruCache) Get(key Key) (interface{}, bool) {
 
 // Clear очистить кэш.
 func (c *lruCache) Clear() {
-	defer c.mu.Unlock()
 	c.mu.Lock()
+	defer c.mu.Unlock()
 	c.queue = NewList()
 	c.items = make(map[Key]*ListItem)
 }
 
-// dropFromMap удалить элемент из map по значению.
-func (c *lruCache) dropFromMap(item *ListItem) {
-	for key, v := range c.items {
-		if v == item {
-			delete(c.items, key)
-		}
+// changeElement изменить существующий элемент.
+func (c *lruCache) changeElement(el *ListItem, value interface{}) {
+	item := convertListItemToCacheItem(el)
+	item.val = value
+	el.Value = item
+	c.queue.MoveToFront(el)
+}
+
+// deleteLastElement удалить наименнее используемый элемент кэша.
+func (c *lruCache) deleteLastElement() {
+	lastElement := c.queue.Back()
+	lastItem := convertListItemToCacheItem(lastElement)
+	c.queue.Remove(lastElement)
+	delete(c.items, lastItem.key)
+}
+
+// convertListItemToCacheItem конвертировать ListItem в cacheItem.
+func convertListItemToCacheItem(listItem *ListItem) *cacheItem {
+	if item, ok := listItem.Value.(*cacheItem); ok {
+		return item
 	}
+
+	panic("не вышло конвертировать элемент кэша в структуру")
 }
