@@ -19,7 +19,7 @@ type lruCache struct {
 	capacity int
 	queue    List
 	items    map[Key]*ListItem
-	mu       *sync.RWMutex
+	mu       *sync.Mutex
 }
 
 // cacheItem структура элемента кэша для хранения ключа.
@@ -34,7 +34,7 @@ func NewCache(capacity int) Cache {
 		capacity: capacity,
 		queue:    NewList(),
 		items:    make(map[Key]*ListItem, capacity),
-		mu:       &sync.RWMutex{},
+		mu:       &sync.Mutex{},
 	}
 }
 
@@ -62,8 +62,8 @@ func (c *lruCache) Set(key Key, value interface{}) bool {
 
 // Get получить значение кэша по ключу.
 func (c *lruCache) Get(key Key) (interface{}, bool) {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	if el, ok := c.items[key]; ok {
 		c.queue.MoveToFront(el)
 		item := convertListItemToCacheItem(el)

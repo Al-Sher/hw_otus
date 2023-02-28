@@ -37,19 +37,11 @@ func (l *list) Len() int {
 
 // Front функция для получения первого элемента списка.
 func (l *list) Front() *ListItem {
-	if l.head == nil {
-		return nil
-	}
-
 	return l.head
 }
 
 // Back функция для получения последнего элемента списка.
 func (l *list) Back() *ListItem {
-	if l.tail == nil {
-		return nil
-	}
-
 	return l.tail
 }
 
