@@ -2,6 +2,7 @@ package hw02unpackstring
 
 import (
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -17,10 +18,10 @@ func TestUnpack(t *testing.T) {
 		{input: "", expected: ""},
 		{input: "aaa0b", expected: "aab"},
 		// uncomment if task with asterisk completed
-		// {input: `qwe\4\5`, expected: `qwe45`},
-		// {input: `qwe\45`, expected: `qwe44444`},
-		// {input: `qwe\\5`, expected: `qwe\\\\\`},
-		// {input: `qwe\\\3`, expected: `qwe\3`},
+		{input: `qwe\4\5`, expected: `qwe45`},
+		{input: `qwe\45`, expected: `qwe44444`},
+		{input: `qwe\\5`, expected: `qwe\\\\\`},
+		{input: `qwe\\\3`, expected: `qwe\3`},
 	}
 
 	for _, tc := range tests {
@@ -40,6 +41,66 @@ func TestUnpackInvalidString(t *testing.T) {
 		t.Run(tc, func(t *testing.T) {
 			_, err := Unpack(tc)
 			require.Truef(t, errors.Is(err, ErrInvalidString), "actual error %q", err)
+		})
+	}
+}
+
+func TestUnpackInvalidStringWithAsterisk(t *testing.T) {
+	invalidStrings := []string{`s2\qe`, `s2q\@`, `\_`}
+	for _, tc := range invalidStrings {
+		tc := tc
+		t.Run(tc, func(t *testing.T) {
+			_, err := Unpack(tc)
+			require.Truef(t, errors.Is(err, ErrInvalidString), "actual error %q", err)
+		})
+	}
+}
+
+func TestUnpackWithSymbols(t *testing.T) {
+	tests := []struct {
+		input    string
+		excepted string
+		hasError bool
+	}{
+		{"t2_4\n6", "tt____\n\n\n\n\n\n", false},
+		{"≈5", "≈≈≈≈≈", false},
+		{"❄3", "❄❄❄", false},
+		{`_5\\55_53`, "", true},
+		{"=^_^=", "=^_^=", false},
+	}
+
+	for _, test := range tests {
+		t.Run(test.input, func(t *testing.T) {
+			result, err := Unpack(test.input)
+			if test.hasError {
+				require.Error(t, err)
+			} else {
+				require.Equal(t, test.excepted, result)
+			}
+		})
+	}
+}
+
+func TestRepeatIfNeed(t *testing.T) {
+	tests := []struct {
+		prev     rune
+		cur      rune
+		excepted string
+	}{
+		{'a', '2', "aa"},
+		{'a', 'b', ""},
+		{'a', '5', "aaaaa"},
+		{'b', '2', "bb"},
+	}
+
+	for _, test := range tests {
+		var buf strings.Builder
+		t.Run(test.excepted, func(t *testing.T) {
+			_, err := repeatIfNeed(&buf, test.prev, test.cur)
+			if err != nil {
+				require.Fail(t, err.Error())
+			}
+			require.Equal(t, test.excepted, buf.String())
 		})
 	}
 }
