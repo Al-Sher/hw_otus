@@ -55,13 +55,13 @@ func Run(tasks []Task, n, m int) error {
 // run функция-форкер, выполняющая пришедшие в канале задачи.
 func run(task chan Task, wg *sync.WaitGroup, errCount *int32, maxErrors int32) {
 	defer wg.Done()
-	for {
-		if t, ok := <-task; ok && atomic.LoadInt32(errCount) < maxErrors {
-			if err := t(); err != nil {
-				atomic.AddInt32(errCount, 1)
-			}
-		} else {
+	for t := range task {
+		if atomic.LoadInt32(errCount) > maxErrors {
 			return
+		}
+
+		if err := t(); err != nil {
+			atomic.AddInt32(errCount, 1)
 		}
 	}
 }
