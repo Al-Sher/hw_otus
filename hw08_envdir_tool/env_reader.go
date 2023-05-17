@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"os"
 	"strings"
 )
@@ -13,6 +14,8 @@ type EnvValue struct {
 	Value      string
 	NeedRemove bool
 }
+
+var ErrNameContainsEqualsSign = errors.New("название файла содержит знак равенства")
 
 // ReadDir reads a specified directory and returns map of env variables.
 // Variables represented as files where filename is name of variable, file first line is a value.
@@ -29,6 +32,10 @@ func ReadDir(dir string) (Environment, error) {
 			continue
 		}
 
+		if i := strings.Index(entity.Name(), "="); i != -1 {
+			return nil, ErrNameContainsEqualsSign
+		}
+
 		content, err := os.ReadFile(dir + "/" + entity.Name())
 		if err != nil {
 			return nil, err
@@ -42,10 +49,7 @@ func ReadDir(dir string) (Environment, error) {
 
 		str := strings.TrimRight(string(content), " \t\n")
 
-		needRemove := false
-		if str == "" {
-			needRemove = true
-		}
+		needRemove := str == ""
 
 		result[entity.Name()] = EnvValue{
 			Value:      str,
