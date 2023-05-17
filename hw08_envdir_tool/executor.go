@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -11,8 +12,8 @@ import (
 func RunCmd(cmd []string, env Environment) (returnCode int) {
 	c := exec.Command(cmd[0], cmd[1:]...)
 
-	var newEnv []string
-	var envs = c.Environ()
+	newEnv := make([]string, 0)
+	envs := c.Environ()
 
 	for _, value := range envs {
 		envKeyWithValue := strings.Split(value, "=")
@@ -34,7 +35,8 @@ func RunCmd(cmd []string, env Environment) (returnCode int) {
 	c.Stderr = os.Stderr
 
 	if err := c.Run(); err != nil {
-		if exitError, ok := err.(*exec.ExitError); ok {
+		var exitError *exec.ExitError
+		if errors.As(err, &exitError) {
 			return exitError.ExitCode()
 		}
 		// Произошла ошибка приложения при запуске команды

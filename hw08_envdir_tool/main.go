@@ -13,8 +13,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	var path = os.Args[1]
-	var args = os.Args[2:]
+	path := os.Args[1]
+	args := os.Args[2:]
 
 	envs, err := ReadDir(path)
 	if err != nil {

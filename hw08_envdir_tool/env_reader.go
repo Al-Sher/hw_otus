@@ -22,7 +22,7 @@ func ReadDir(dir string) (Environment, error) {
 		return nil, err
 	}
 
-	var result = make(Environment)
+	result := make(Environment)
 
 	for _, entity := range entities {
 		if entity.IsDir() {
@@ -38,7 +38,7 @@ func ReadDir(dir string) (Environment, error) {
 			content = content[:i]
 		}
 
-		content = bytes.Replace(content, []byte{0x00}, []byte("\n"), -1)
+		content = bytes.ReplaceAll(content, []byte{0x00}, []byte("\n"))
 
 		str := strings.TrimRight(string(content), " \t\n")
 
