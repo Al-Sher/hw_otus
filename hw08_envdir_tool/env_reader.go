@@ -32,7 +32,7 @@ func ReadDir(dir string) (Environment, error) {
 			continue
 		}
 
-		if i := strings.Index(entity.Name(), "="); i != -1 {
+		if strings.Contains(entity.Name(), "=") {
 			return nil, ErrNameContainsEqualsSign
 		}
 
