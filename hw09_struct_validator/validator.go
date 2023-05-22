@@ -29,12 +29,17 @@ type ValidationError struct {
 type ValidationErrors []ValidationError
 
 func (v ValidationErrors) Error() string {
-	errs := make([]string, 0, len(v))
-	for _, err := range v {
-		errs = append(errs, fmt.Sprintf("%s = %s", err.Field, err.Err))
+	buf := strings.Builder{}
+
+	l := len(v) - 1
+	for i, err := range v {
+		buf.WriteString(fmt.Sprintf("%s = %s", err.Field, err.Err))
+		if i != l {
+			buf.WriteString("; ")
+		}
 	}
 
-	return strings.Join(errs, ";")
+	return buf.String()
 }
 
 type SysErr struct {
@@ -163,7 +168,7 @@ func validateIntInRule(value int, valueRule string) error {
 	for _, v := range in {
 		i, err := strconv.Atoi(v)
 		if err != nil {
-			return err
+			return SysErr{err}
 		}
 
 		if value == i {
