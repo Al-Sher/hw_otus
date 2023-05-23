@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"regexp"
 	"strings"
 
 	"github.com/mailru/easyjson"
@@ -20,22 +19,15 @@ func GetDomainStat(r io.Reader, domain string) (DomainStat, error) {
 	if err != nil {
 		return nil, fmt.Errorf("get users error: %w", err)
 	}
-	return countDomains(u)
+	return u, nil
 }
 
-type users []User
-
-func getUsers(r io.Reader, domain string) (result users, err error) {
+func getUsers(r io.Reader, domain string) (result DomainStat, err error) {
 	if r == nil {
 		return nil, ErrNilReader
 	}
 
-	result = make(users, 0)
-
-	exp, err := regexp.Compile("\\." + domain)
-	if err != nil {
-		return
-	}
+	result = make(DomainStat, 0)
 
 	sc := bufio.NewScanner(r)
 
@@ -44,21 +36,11 @@ func getUsers(r io.Reader, domain string) (result users, err error) {
 		if err = easyjson.Unmarshal(sc.Bytes(), &user); err != nil {
 			return
 		}
-		if exp.MatchString(user.Email) {
-			result = append(result, user)
+		if strings.HasSuffix(user.Email, "."+domain) {
+			if i := strings.Index(user.Email, "@"); i != -1 {
+				result[strings.ToLower(user.Email[i+1:])]++
+			}
 		}
 	}
 	return
-}
-
-func countDomains(u users) (DomainStat, error) {
-	result := make(DomainStat, len(u))
-
-	for _, user := range u {
-		if i := strings.Index(user.Email, "@"); i != -1 {
-			result[strings.ToLower(user.Email[i+1:])]++
-		}
-	}
-
-	return result, nil
 }
