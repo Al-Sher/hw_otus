@@ -5,6 +5,7 @@ package hw10programoptimization
 
 import (
 	"archive/zip"
+	"bytes"
 	"testing"
 	"time"
 
@@ -17,6 +18,21 @@ const (
 
 	timeLimit = 300 * time.Millisecond
 )
+
+func BenchmarkGetDomainStat(b *testing.B) {
+	data := `
+{"Id":1,"Name":"H","Username":"0Oli","Email":"aliquid@Browsedrive.gov","Phone":"6-866-899-36-79","Password":"InAQJvsq"}
+{"Id":2,"Name":"J","Username":"qRichard","Email":"mLynch@broWsecat.com","Phone":"9-373-949-64-00","Password":"SiZLeNSG"}
+{"Id":3,"Name":"C","Username":"RachelA","Email":"RoseSmith@Browsecat.com","Phone":"988-48-97","Password":"71kuz3gA5w"}
+{"Id":4,"Name":"G","Username":"tButler","Email":"5Moore@Teklist.net","Phone":"520-04-16","Password":"r639qLNu"}
+{"Id":5,"Name":"J","Username":"KeithHart","Email":"nulla@Linktype.com","Phone":"146-91-01","Password":"acSBF5"}`
+	r := bytes.NewBufferString(data)
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		GetDomainStat(r, "biz")
+	}
+}
 
 // go test -v -count=1 -timeout=30s -tags bench .
 func TestGetDomainStat_Time_And_Memory(t *testing.T) {
