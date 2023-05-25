@@ -2,6 +2,8 @@ package main
 
 import (
 	"bytes"
+	"errors"
+	"fmt"
 	"io"
 	"net"
 	"sync"
@@ -61,5 +63,59 @@ func TestTelnetClient(t *testing.T) {
 		}()
 
 		wg.Wait()
+	})
+
+	t.Run("read from closed connection", func(t *testing.T) {
+		in := &bytes.Buffer{}
+		out := &bytes.Buffer{}
+
+		timeout, err := time.ParseDuration("10s")
+		require.NoError(t, err)
+
+		client := NewTelnetClient("localhost:8080", timeout, io.NopCloser(in), out)
+
+		err = client.Receive()
+		require.Truef(t, errors.Is(err, ErrNotConnectionOpen), "actual error %q, excepted %q", err, ErrNotConnectionOpen)
+	})
+
+	t.Run("write to closed connection", func(t *testing.T) {
+		in := &bytes.Buffer{}
+		out := &bytes.Buffer{}
+
+		timeout, err := time.ParseDuration("10s")
+		require.NoError(t, err)
+
+		client := NewTelnetClient("localhost:8080", timeout, io.NopCloser(in), out)
+
+		err = client.Send()
+		require.Truef(t, errors.Is(err, ErrNotConnectionOpen), "actual error %q, excepted %q", err, ErrNotConnectionOpen)
+	})
+
+	t.Run("close closed connection", func(t *testing.T) {
+		in := &bytes.Buffer{}
+		out := &bytes.Buffer{}
+
+		timeout, err := time.ParseDuration("10s")
+		require.NoError(t, err)
+
+		client := NewTelnetClient("localhost:8080", timeout, io.NopCloser(in), out)
+
+		err = client.Close()
+		require.Truef(t, errors.Is(err, ErrNotConnectionOpen), "actual error %q, excepted %q", err, ErrNotConnectionOpen)
+	})
+
+	t.Run("connect to not exist host", func(t *testing.T) {
+		in := &bytes.Buffer{}
+		out := &bytes.Buffer{}
+
+		timeout, err := time.ParseDuration("10s")
+		require.NoError(t, err)
+
+		client := NewTelnetClient("test.local:8080", timeout, io.NopCloser(in), out)
+
+		err = client.Connect()
+		fmt.Println(err)
+		var dnsError *net.DNSError
+		require.Truef(t, errors.As(err, &dnsError), "actual type error %T, excepted %T", err, dnsError)
 	})
 }
