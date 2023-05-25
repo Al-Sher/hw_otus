@@ -46,10 +46,6 @@ func write(ctx context.Context, client TelnetClient, wg *sync.WaitGroup) {
 				fmt.Println(err)
 			}
 
-			err = client.Close()
-			if err != nil {
-				fmt.Println(err)
-			}
 			return
 		}
 	}
@@ -78,7 +74,15 @@ func main() {
 	wg.Add(2)
 	go read(ctx, client, wg)
 
-	go write(ctx, client, wg)
+	go func(cancel context.CancelFunc) {
+		defer cancel()
+		write(ctx, client, wg)
+	}(cancel)
 
 	wg.Wait()
+
+	err = client.Close()
+	if err != nil {
+		fmt.Println(err)
+	}
 }
