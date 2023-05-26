@@ -18,7 +18,8 @@ func init() {
 	flag.DurationVar(&timeout, "timeout", 10*time.Second, "")
 }
 
-func read(ctx context.Context, client TelnetClient) {
+func read(ctx context.Context, client TelnetClient, wg *sync.WaitGroup) {
+	defer wg.Done()
 	for {
 		select {
 		case <-ctx.Done():
@@ -33,7 +34,8 @@ func read(ctx context.Context, client TelnetClient) {
 	}
 }
 
-func write(ctx context.Context, client TelnetClient) {
+func write(ctx context.Context, client TelnetClient, wg *sync.WaitGroup) {
+	defer wg.Done()
 	for {
 		select {
 		case <-ctx.Done():
@@ -70,16 +72,12 @@ func main() {
 
 	wg := &sync.WaitGroup{}
 	wg.Add(2)
-	go func() {
-		defer wg.Done()
-		read(ctx, client)
-	}()
+	go read(ctx, client, wg)
 
-	go func() {
-		defer wg.Done()
+	go func(cancel context.CancelFunc) {
 		defer cancel()
-		write(ctx, client)
-	}()
+		write(ctx, client, wg)
+	}(cancel)
 
 	wg.Wait()
 
