@@ -90,9 +90,6 @@ func (t *telnetClient) Close() error {
 	}
 
 	_, err = fmt.Fprint(os.Stderr, "...Connection was closed by peer\n")
-	if err != nil {
-		return err
-	}
 
-	return nil
+	return err
 }
