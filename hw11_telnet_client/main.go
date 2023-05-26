@@ -76,8 +76,8 @@ func main() {
 	}()
 
 	go func() {
-		defer cancel()
 		defer wg.Done()
+		defer cancel()
 		write(ctx, client)
 	}()
 
