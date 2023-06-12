@@ -149,6 +149,7 @@ func (s *storage) EventsByDates(
 	if err != nil {
 		return result, err
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		event := internalStorage.Event{}
