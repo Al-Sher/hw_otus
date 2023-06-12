@@ -1,4 +1,5 @@
 BIN := "./bin/calendar"
+BIN_MIGRATE := "./bin/migrate"
 DOCKER_IMG="calendar:develop"
 
 GIT_HASH := $(shell git log --format="%h" -n 1)
@@ -32,3 +33,9 @@ lint: install-lint-deps
 	golangci-lint run ./...
 
 .PHONY: build run build-img run-img version test lint
+
+build-migrate:
+	go build -v -o $(BIN_MIGRATE) -ldflags "$(LDFLAGS)" ./cmd/migrate
+
+migrate: build-migrate
+	$(BIN_MIGRATE) -config ./configs/config.toml
