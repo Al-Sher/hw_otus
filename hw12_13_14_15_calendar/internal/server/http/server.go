@@ -6,26 +6,31 @@ import (
 	"time"
 
 	"github.com/Al-Sher/hw_otus/hw12_13_14_15_calendar/internal/app"
+	"github.com/Al-Sher/hw_otus/hw12_13_14_15_calendar/internal/config"
 	"github.com/Al-Sher/hw_otus/hw12_13_14_15_calendar/internal/logger"
 )
 
 type Server struct {
-	app app.App
-	srv *http.Server
+	app    app.App
+	srv    *http.Server
+	logger logger.Logger
+	config config.Config
 }
 
-func NewServer(app app.App) *Server {
+func NewServer(app app.App, l logger.Logger, c config.Config) *Server {
 	return &Server{
-		app: app,
+		app:    app,
+		logger: l,
+		config: c,
 	}
 }
 
 func (s *Server) Start(ctx context.Context) error {
-	s.app.Logger().Info("Start server on " + s.app.Config().HTTPAddr())
+	s.logger.Info("Start server on " + s.config.HTTPAddr())
 	s.srv = &http.Server{
-		Addr:              s.app.Config().HTTPAddr(),
-		Handler:           mux(ctx, s.app.Logger()),
-		ReadHeaderTimeout: time.Duration(s.app.Config().HTTPReadTimeout()) * time.Second,
+		Addr:              s.config.HTTPAddr(),
+		Handler:           mux(ctx, s.logger),
+		ReadHeaderTimeout: time.Duration(s.config.HTTPReadTimeout()) * time.Second,
 	}
 
 	err := s.srv.ListenAndServe()
