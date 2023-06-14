@@ -3,8 +3,6 @@ package sqlstorage
 import (
 	"context"
 	"errors"
-	"fmt"
-	"sync"
 	"time"
 
 	internalStorage "github.com/Al-Sher/hw_otus/hw12_13_14_15_calendar/internal/storage"
@@ -14,7 +12,6 @@ import (
 const Type string = "pgsql"
 
 type storage struct {
-	mu   sync.RWMutex
 	conn *pgx.Conn
 }
 
@@ -26,9 +23,7 @@ type Notification struct {
 }
 
 func New() internalStorage.Storage {
-	return &storage{
-		mu: sync.RWMutex{},
-	}
+	return &storage{}
 }
 
 func (s *storage) Connect(ctx context.Context, dsn string) error {
@@ -116,7 +111,7 @@ func (s *storage) EventsDay(ctx context.Context, date time.Time) ([]internalStor
 	startDate := time.Date(year, month, day, 0, 0, 0, 0, time.UTC)
 	endDate := time.Date(year, month, day, 23, 59, 59, 999, time.UTC)
 
-	return s.EventsByDates(ctx, startDate, endDate)
+	return s.eventsByDates(ctx, startDate, endDate)
 }
 
 func (s *storage) EventsWeek(ctx context.Context, date time.Time) ([]internalStorage.Event, error) {
@@ -124,7 +119,7 @@ func (s *storage) EventsWeek(ctx context.Context, date time.Time) ([]internalSto
 	startDate := time.Date(year, month, day, 0, 0, 0, 0, time.UTC)
 	endDate := time.Date(year, month, day+7, 23, 59, 59, 999, time.UTC)
 
-	return s.EventsByDates(ctx, startDate, endDate)
+	return s.eventsByDates(ctx, startDate, endDate)
 }
 
 func (s *storage) EventsMonth(ctx context.Context, date time.Time) ([]internalStorage.Event, error) {
@@ -132,10 +127,10 @@ func (s *storage) EventsMonth(ctx context.Context, date time.Time) ([]internalSt
 	startDate := time.Date(year, month, day, 0, 0, 0, 0, time.UTC)
 	endDate := time.Date(year, month+1, day, 23, 59, 59, 999, time.UTC)
 
-	return s.EventsByDates(ctx, startDate, endDate)
+	return s.eventsByDates(ctx, startDate, endDate)
 }
 
-func (s *storage) EventsByDates(
+func (s *storage) eventsByDates(
 	ctx context.Context,
 	startDate time.Time,
 	endDate time.Time,
@@ -173,7 +168,6 @@ func (s *storage) EventsByDates(
 
 func (s *storage) isDateBusy(ctx context.Context, event internalStorage.Event) (bool, error) {
 	sql := `SELECT id from events WHERE (start_at BETWEEN $1 AND $2 OR end_at BETWEEN $1 AND $2) AND id != $3`
-	fmt.Println(event.EndAt, event.StartAt, event.ID)
 	row := s.conn.QueryRow(ctx, sql, event.StartAt, event.EndAt, event.ID)
 
 	var id string

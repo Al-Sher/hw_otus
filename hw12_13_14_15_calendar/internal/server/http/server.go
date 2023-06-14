@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/Al-Sher/hw_otus/hw12_13_14_15_calendar/internal/app"
-	"github.com/Al-Sher/hw_otus/hw12_13_14_15_calendar/internal/logger"
 )
 
 type Server struct {
@@ -24,7 +23,7 @@ func (s *Server) Start(ctx context.Context) error {
 	s.app.Logger().Info("Start server on " + s.app.Config().HTTPAddr())
 	s.srv = &http.Server{
 		Addr:              s.app.Config().HTTPAddr(),
-		Handler:           mux(ctx, s.app.Logger()),
+		Handler:           handler(ctx, s.app),
 		ReadHeaderTimeout: time.Duration(s.app.Config().HTTPReadTimeout()) * time.Second,
 	}
 
@@ -43,31 +42,10 @@ func (s *Server) Stop(ctx context.Context) error {
 	return s.srv.Shutdown(ctx)
 }
 
-func mux(ctx context.Context, logger logger.Logger) http.Handler {
-	mux := http.NewServeMux()
-	mux.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
-		if request.RequestURI != "/" {
-			if err := notFound(writer); err != nil {
-				logger.Error(err)
-				return
-			}
-			return
-		}
+func handler(ctx context.Context, app app.App) http.Handler {
+	service := NewHandlers(app)
 
-		_, err := writer.Write([]byte("hello-world"))
-		if err != nil {
-			logger.Error(err)
-			return
-		}
-	})
+	h := loggingMiddleware(ctx, service.Handlers(ctx), app.Logger())
 
-	handler := loggingMiddleware(ctx, mux, logger)
-
-	return handler
-}
-
-func notFound(writer http.ResponseWriter) error {
-	writer.WriteHeader(http.StatusNotFound)
-	_, err := writer.Write([]byte("Page not found"))
-	return err
+	return h
 }

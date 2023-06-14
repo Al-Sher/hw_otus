@@ -39,3 +39,6 @@ build-migrate:
 
 migrate: build-migrate
 	$(BIN_MIGRATE) -config ./configs/config.toml
+
+generate:
+	go generate ./...

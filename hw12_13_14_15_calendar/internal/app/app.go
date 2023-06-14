@@ -29,6 +29,9 @@ type App interface {
 		authorID string,
 	) error
 	DeleteEvent(ctx context.Context, id string) error
+	EventByDay(ctx context.Context, day time.Time) ([]storage.Event, error)
+	EventByWeek(ctx context.Context, day time.Time) ([]storage.Event, error)
+	EventByMonth(ctx context.Context, day time.Time) ([]storage.Event, error)
 	Logger() logger.Logger
 	Config() config.Config
 }
@@ -88,6 +91,18 @@ func (a *app) UpdateEvent(
 
 func (a *app) DeleteEvent(ctx context.Context, id string) error {
 	return a.storage.DeleteEvent(ctx, id)
+}
+
+func (a *app) EventByDay(ctx context.Context, day time.Time) ([]storage.Event, error) {
+	return a.storage.EventsDay(ctx, day)
+}
+
+func (a *app) EventByWeek(ctx context.Context, day time.Time) ([]storage.Event, error) {
+	return a.storage.EventsWeek(ctx, day)
+}
+
+func (a *app) EventByMonth(ctx context.Context, day time.Time) ([]storage.Event, error) {
+	return a.storage.EventsMonth(ctx, day)
 }
 
 func (a *app) Logger() logger.Logger {

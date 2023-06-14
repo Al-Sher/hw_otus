@@ -4,6 +4,7 @@ level = "debug"
 [server]
 httpAddr = ":8080"
 httpReadTimeout = 10
+grpcAddr = ":8081"
 
 [storage]
 storageType = "pgsql"
