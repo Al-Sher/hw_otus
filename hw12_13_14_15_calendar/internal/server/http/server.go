@@ -2,30 +2,77 @@ package internalhttp
 
 import (
 	"context"
+	"net/http"
+	"time"
+
+	"github.com/Al-Sher/hw_otus/hw12_13_14_15_calendar/internal/app"
+	"github.com/Al-Sher/hw_otus/hw12_13_14_15_calendar/internal/config"
+	"github.com/Al-Sher/hw_otus/hw12_13_14_15_calendar/internal/logger"
 )
 
-type Server struct { // TODO
+type Server struct {
+	app    app.App
+	srv    *http.Server
+	logger logger.Logger
+	config config.Config
 }
 
-type Logger interface { // TODO
-}
-
-type Application interface { // TODO
-}
-
-func NewServer(logger Logger, app Application) *Server {
-	return &Server{}
+func NewServer(app app.App, l logger.Logger, c config.Config) *Server {
+	return &Server{
+		app:    app,
+		logger: l,
+		config: c,
+	}
 }
 
 func (s *Server) Start(ctx context.Context) error {
-	// TODO
+	s.logger.Info("Start server on " + s.config.HTTPAddr())
+	s.srv = &http.Server{
+		Addr:              s.config.HTTPAddr(),
+		Handler:           mux(ctx, s.logger),
+		ReadHeaderTimeout: time.Duration(s.config.HTTPReadTimeout()) * time.Second,
+	}
+
+	err := s.srv.ListenAndServe()
 	<-ctx.Done()
-	return nil
+
+	// Завершение работы сервера не является ошибкой запуска
+	if err == http.ErrServerClosed {
+		return nil
+	}
+
+	return err
 }
 
 func (s *Server) Stop(ctx context.Context) error {
-	// TODO
-	return nil
+	return s.srv.Shutdown(ctx)
 }
 
-// TODO
+func mux(ctx context.Context, logger logger.Logger) http.Handler {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
+		if request.RequestURI != "/" {
+			if err := notFound(writer); err != nil {
+				logger.Error(err)
+				return
+			}
+			return
+		}
+
+		_, err := writer.Write([]byte("hello-world"))
+		if err != nil {
+			logger.Error(err)
+			return
+		}
+	})
+
+	handler := loggingMiddleware(ctx, mux, logger)
+
+	return handler
+}
+
+func notFound(writer http.ResponseWriter) error {
+	writer.WriteHeader(http.StatusNotFound)
+	_, err := writer.Write([]byte("Page not found"))
+	return err
+}

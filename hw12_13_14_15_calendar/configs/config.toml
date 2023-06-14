@@ -1,5 +1,10 @@
 [logger]
-level = "INFO"
+level = "debug"
 
-# TODO
-# ...
+[server]
+httpAddr = ":8080"
+httpReadTimeout = 10
+
+[storage]
+storageType = "pgsql"
+dsn = "postgres://app_user:app_password@localhost:5432/calendar?sslmode=disable"
