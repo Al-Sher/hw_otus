@@ -3,7 +3,6 @@ package sqlstorage
 import (
 	"context"
 	"errors"
-	"sync"
 	"time"
 
 	internalStorage "github.com/Al-Sher/hw_otus/hw12_13_14_15_calendar/internal/storage"
@@ -13,7 +12,6 @@ import (
 const Type string = "pgsql"
 
 type storage struct {
-	mu   sync.RWMutex
 	conn *pgx.Conn
 }
 
@@ -25,9 +23,7 @@ type Notification struct {
 }
 
 func New() internalStorage.Storage {
-	return &storage{
-		mu: sync.RWMutex{},
-	}
+	return &storage{}
 }
 
 func (s *storage) Connect(ctx context.Context, dsn string) error {
