@@ -49,7 +49,7 @@ func (s *Server) Stop(ctx context.Context) error {
 }
 
 func handler(ctx context.Context, app app.App, logg logger.Logger) http.Handler {
-	service := NewHandlers(app)
+	service := NewHandlers(app, logg)
 
 	h := loggingMiddleware(ctx, service.Handlers(ctx), logg)
 

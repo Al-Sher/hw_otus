@@ -45,8 +45,8 @@ var (
 	ErrPageNotFound       = errors.New("page not found")
 )
 
-func NewHandlers(app app.App) Handler {
-	return Handler{app: app}
+func NewHandlers(app app.App, l logger.Logger) Handler {
+	return Handler{app: app, logger: l}
 }
 
 func (h *Handler) Handlers(ctx context.Context) http.HandlerFunc {
@@ -84,9 +84,9 @@ func (h *Handler) Handlers(ctx context.Context) http.HandlerFunc {
 		w.Header().Add("Content-Type", "application/json")
 		if res.Error != nil {
 			switch {
-			case errors.Is(err, ErrPageNotFound):
+			case errors.Is(res.Error, ErrPageNotFound):
 				w.WriteHeader(http.StatusNotFound)
-			case errors.Is(err, ErrNotSupportedMethod):
+			case errors.Is(res.Error, ErrNotSupportedMethod):
 				w.WriteHeader(http.StatusMethodNotAllowed)
 			default:
 				w.WriteHeader(http.StatusBadRequest)
@@ -154,6 +154,10 @@ func (h *Handler) update(ctx context.Context, r *http.Request) result {
 		return result{Error: err}
 	}
 
+	if r.URL.Path == URLPath {
+		return result{Error: ErrNotSupportedMethod}
+	}
+
 	id := r.URL.Path[len(URLPath)+1:]
 
 	if err := h.app.UpdateEvent(
@@ -172,6 +176,10 @@ func (h *Handler) update(ctx context.Context, r *http.Request) result {
 }
 
 func (h *Handler) delete(ctx context.Context, r *http.Request) result {
+	if r.URL.Path == URLPath {
+		return result{Error: ErrNotSupportedMethod}
+	}
+
 	id := r.URL.Path[len(URLPath)+1:]
 
 	if err := h.app.DeleteEvent(
@@ -185,6 +193,9 @@ func (h *Handler) delete(ctx context.Context, r *http.Request) result {
 }
 
 func (h *Handler) get(ctx context.Context, r *http.Request) result {
+	if r.URL.Path == URLPath {
+		return result{Error: ErrNotSupportedMethod}
+	}
 	query := strings.Split(r.URL.Path[len(URLPath)+1:], "/")
 	if len(query) != 2 || !contains(query[0], []string{"day", "week", "month"}) {
 		return result{Error: ErrPageNotFound}
