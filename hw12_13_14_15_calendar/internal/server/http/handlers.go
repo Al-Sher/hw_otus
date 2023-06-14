@@ -24,12 +24,12 @@ type result struct {
 }
 
 type event struct {
-	Id          string    `json:"id,omitempty"`
+	ID          string    `json:"id,omitempty"`
 	Title       string    `json:"title"`
-	StartAt     time.Time `json:"start_at"`
+	StartAt     time.Time `json:"startAt"`
 	Duration    float64   `json:"duration"`
 	Description string    `json:"description"`
-	AuthorId    string    `json:"author_id"`
+	AuthorID    string    `json:"authorId"`
 }
 
 type EventResult struct {
@@ -81,7 +81,7 @@ func (h *Handler) Handlers(ctx context.Context) http.HandlerFunc {
 
 		w.Header().Add("Content-Type", "application/json")
 		if res.Error != nil {
-			switch true {
+			switch {
 			case errors.Is(err, ErrPageNotFound):
 				w.WriteHeader(http.StatusNotFound)
 			case errors.Is(err, ErrNotSupportedMethod):
@@ -138,7 +138,7 @@ func (h *Handler) create(ctx context.Context, r *http.Request) result {
 		e.StartAt,
 		time.Duration(e.Duration)*time.Second,
 		e.Description,
-		e.AuthorId,
+		e.AuthorID,
 	); err != nil {
 		return result{Error: err}
 	}
@@ -161,7 +161,7 @@ func (h *Handler) update(ctx context.Context, r *http.Request) result {
 		e.StartAt,
 		time.Duration(e.Duration)*time.Second,
 		e.Description,
-		e.AuthorId,
+		e.AuthorID,
 	); err != nil {
 		return result{Error: err}
 	}
@@ -237,12 +237,12 @@ func convert(events []storage.Event) []*event {
 	r := make([]*event, 0, len(events))
 	for _, e := range events {
 		eResult := &event{
-			Id:          e.ID,
+			ID:          e.ID,
 			Title:       e.Title,
 			StartAt:     e.StartAt,
 			Duration:    e.EndAt.Sub(e.StartAt).Seconds(),
 			Description: e.Description,
-			AuthorId:    e.AuthorID,
+			AuthorID:    e.AuthorID,
 		}
 		r = append(r, eResult)
 	}

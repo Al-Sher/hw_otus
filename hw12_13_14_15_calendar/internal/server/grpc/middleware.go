@@ -1,6 +1,7 @@
 package grpc
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -11,18 +12,19 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-import (
-	"context"
-)
-
 func UnaryServerRequestLoggerMiddlewareInterceptor(logger logger.Logger) grpc.UnaryServerInterceptor {
-	return func(ctx context.Context, r interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+	return func(
+		ctx context.Context,
+		r interface{},
+		info *grpc.UnaryServerInfo,
+		handler grpc.UnaryHandler,
+	) (interface{}, error) {
 		start := time.Now()
 		result, err := handler(ctx, r)
 
-		var realIp string
+		var realIP string
 		if p, ok := peer.FromContext(ctx); ok {
-			realIp = p.Addr.String()
+			realIP = p.Addr.String()
 		}
 
 		var userAgent string
@@ -36,7 +38,7 @@ func UnaryServerRequestLoggerMiddlewareInterceptor(logger logger.Logger) grpc.Un
 		logger.Info(
 			fmt.Sprintf(
 				"%s [%s] %s %s %s %d %f \"%s\"",
-				realIp,
+				realIP,
 				time.Now(),
 				"grpc",
 				info.FullMethod,
