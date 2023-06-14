@@ -2,7 +2,6 @@ package logger
 
 import (
 	"fmt"
-	"os"
 	"strings"
 
 	"go.uber.org/zap"
@@ -21,16 +20,15 @@ type logger struct {
 	logger *zap.Logger
 }
 
-func New(level string, path string) Logger {
+func New(level string, path string) (Logger, error) {
 	l, err := config(levelByString(level), path).Build()
 	if err != nil {
-		fmt.Printf("Ошибка инициализации логгера: %s", err)
-		os.Exit(1)
+		return nil, err
 	}
 
 	return &logger{
 		logger: l,
-	}
+	}, nil
 }
 
 func (l *logger) Info(msg interface{}) {

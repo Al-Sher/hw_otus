@@ -46,8 +46,6 @@ type config struct {
 }
 
 type Config interface {
-	afterCreate() error
-
 	LoggerLevel() string
 	LoggerPath() string
 
@@ -89,13 +87,24 @@ func (c *config) MigrationPath() string {
 
 func NewConfig(path string, format string) (Config, error) {
 	var err error
-	var cfg Config
+	cfg := &config{}
+
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	value, err := io.ReadAll(file)
+	if err != nil {
+		return nil, err
+	}
 
 	switch format {
 	case "json":
-		cfg, err = newFromJSON(path)
+		cfg, err = newFromJSON(value)
 	case "toml":
-		cfg, err = newFromToml(path)
+		cfg, err = newFromToml(value)
 	default:
 		return nil, ErrNotValidFormat
 	}
@@ -104,21 +113,12 @@ func NewConfig(path string, format string) (Config, error) {
 		return nil, err
 	}
 
-	return cfg, cfg.afterCreate()
+	cfg.setDefaultValues()
+
+	return cfg, cfg.validate()
 }
 
-func newFromJSON(path string) (Config, error) {
-	file, err := os.Open(path)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-
-	value, err := io.ReadAll(file)
-	if err != nil {
-		return nil, err
-	}
-
+func newFromJSON(value []byte) (*config, error) {
 	c := &config{}
 	if err := json.Unmarshal(value, &c); err != nil {
 		return nil, err
@@ -127,20 +127,8 @@ func newFromJSON(path string) (Config, error) {
 	return c, nil
 }
 
-func newFromToml(path string) (Config, error) {
-	file, err := os.Open(path)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-
-	value, err := io.ReadAll(file)
-	if err != nil {
-		return nil, err
-	}
-
+func newFromToml(value []byte) (*config, error) {
 	c := &config{}
-
 	if err := toml.Unmarshal(value, &c); err != nil {
 		return nil, err
 	}
@@ -148,7 +136,7 @@ func newFromToml(path string) (Config, error) {
 	return c, nil
 }
 
-func (c *config) afterCreate() error {
+func (c *config) validate() error {
 	switch c.StorageType() {
 	case memorystorage.Type, sqlstorage.Type:
 		break
@@ -156,6 +144,10 @@ func (c *config) afterCreate() error {
 		return ErrInvalidStorageType
 	}
 
+	return nil
+}
+
+func (c *config) setDefaultValues() {
 	if c.Logger.Path == "" {
 		c.Logger.Path = DefaultPathForLogger
 	}
@@ -167,8 +159,6 @@ func (c *config) afterCreate() error {
 	if c.Storage.MigrationPath == "" {
 		c.Storage.MigrationPath = DefaultMigrationPath
 	}
-
-	return nil
 }
 
 func ParseFormatFile(path string) string {

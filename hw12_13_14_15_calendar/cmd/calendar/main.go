@@ -47,7 +47,12 @@ func main() {
 	}
 
 	ctx := context.Background()
-	logg := logger.New(c.LoggerLevel(), c.LoggerPath())
+	logg, err := logger.New(c.LoggerLevel(), c.LoggerPath())
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
 	var s storage.Storage
 
 	switch c.StorageType() {
@@ -60,7 +65,7 @@ func main() {
 	err = s.Connect(ctx, c.StorageDsn())
 	if err != nil {
 		logg.Error(err)
-		return
+		os.Exit(1)
 	}
 
 	defer func() {
