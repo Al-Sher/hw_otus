@@ -38,7 +38,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	logg := logger.New(c.LoggerLevel(), c.LoggerPath())
+	logg, err := logger.New(c.LoggerLevel(), c.LoggerPath())
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
 	var db *sql.DB
 
 	switch c.StorageType() {

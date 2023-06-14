@@ -70,6 +70,14 @@ func (s *storage) CreateEvent(ctx context.Context, event internalStorage.Event) 
 }
 
 func (s *storage) UpdateEvent(ctx context.Context, event internalStorage.Event) error {
+	isExist, err := s.isExistByID(ctx, event.ID)
+	if err != nil {
+		return err
+	}
+	if !isExist {
+		return internalStorage.ErrEventNotFound
+	}
+
 	isBusy, err := s.isDateBusy(ctx, event)
 	if err != nil {
 		return err
@@ -99,9 +107,17 @@ func (s *storage) UpdateEvent(ctx context.Context, event internalStorage.Event) 
 }
 
 func (s *storage) DeleteEvent(ctx context.Context, id string) error {
+	isExist, err := s.isExistByID(ctx, id)
+	if err != nil {
+		return err
+	}
+	if !isExist {
+		return internalStorage.ErrEventNotFound
+	}
+
 	sql := `DELETE FROM events WHERE id=$1`
 
-	_, err := s.conn.Exec(ctx, sql, id)
+	_, err = s.conn.Exec(ctx, sql, id)
 
 	return err
 }
@@ -177,4 +193,13 @@ func (s *storage) isDateBusy(ctx context.Context, event internalStorage.Event) (
 	}
 
 	return true, err
+}
+
+func (s *storage) isExistByID(ctx context.Context, id string) (bool, error) {
+	sql := `SELECT EXISTS(SELECT 1 FROM events WHERE id = $1)`
+	row := s.conn.QueryRow(ctx, sql, id)
+	isExist := false
+
+	err := row.Scan(&isExist)
+	return isExist, err
 }
