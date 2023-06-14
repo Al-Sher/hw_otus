@@ -18,7 +18,6 @@ type Storage interface {
 	EventsDay(ctx context.Context, date time.Time) ([]Event, error)
 	EventsWeek(ctx context.Context, date time.Time) ([]Event, error)
 	EventsMonth(ctx context.Context, date time.Time) ([]Event, error)
-	EventsByDates(ctx context.Context, startDate time.Time, endDate time.Time) ([]Event, error)
 	Connect(ctx context.Context, dsn string) error
 	Close(ctx context.Context) error
 }

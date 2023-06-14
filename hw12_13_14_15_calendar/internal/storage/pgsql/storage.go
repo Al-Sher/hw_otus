@@ -131,7 +131,7 @@ func (s *storage) EventsDay(ctx context.Context, date time.Time) ([]internalStor
 	startDate := time.Date(year, month, day, 0, 0, 0, 0, time.UTC)
 	endDate := time.Date(year, month, day, 23, 59, 59, 999, time.UTC)
 
-	return s.EventsByDates(ctx, startDate, endDate)
+	return s.eventsByDates(ctx, startDate, endDate)
 }
 
 func (s *storage) EventsWeek(ctx context.Context, date time.Time) ([]internalStorage.Event, error) {
@@ -139,7 +139,7 @@ func (s *storage) EventsWeek(ctx context.Context, date time.Time) ([]internalSto
 	startDate := time.Date(year, month, day, 0, 0, 0, 0, time.UTC)
 	endDate := time.Date(year, month, day+7, 23, 59, 59, 999, time.UTC)
 
-	return s.EventsByDates(ctx, startDate, endDate)
+	return s.eventsByDates(ctx, startDate, endDate)
 }
 
 func (s *storage) EventsMonth(ctx context.Context, date time.Time) ([]internalStorage.Event, error) {
@@ -147,10 +147,10 @@ func (s *storage) EventsMonth(ctx context.Context, date time.Time) ([]internalSt
 	startDate := time.Date(year, month, day, 0, 0, 0, 0, time.UTC)
 	endDate := time.Date(year, month+1, day, 23, 59, 59, 999, time.UTC)
 
-	return s.EventsByDates(ctx, startDate, endDate)
+	return s.eventsByDates(ctx, startDate, endDate)
 }
 
-func (s *storage) EventsByDates(
+func (s *storage) eventsByDates(
 	ctx context.Context,
 	startDate time.Time,
 	endDate time.Time,

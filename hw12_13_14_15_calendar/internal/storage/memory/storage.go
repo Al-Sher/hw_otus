@@ -108,24 +108,24 @@ func (s *storage) EventsDay(ctx context.Context, date time.Time) ([]internalStor
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	return s.EventsByDates(ctx, date, date.AddDate(0, 0, 1))
+	return s.eventsByDates(ctx, date, date.AddDate(0, 0, 1))
 }
 
 func (s *storage) EventsWeek(ctx context.Context, date time.Time) ([]internalStorage.Event, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	return s.EventsByDates(ctx, date, date.AddDate(0, 0, 7))
+	return s.eventsByDates(ctx, date, date.AddDate(0, 0, 7))
 }
 
 func (s *storage) EventsMonth(ctx context.Context, date time.Time) ([]internalStorage.Event, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	return s.EventsByDates(ctx, date, date.AddDate(0, 1, 0))
+	return s.eventsByDates(ctx, date, date.AddDate(0, 1, 0))
 }
 
-func (s *storage) EventsByDates(
+func (s *storage) eventsByDates(
 	_ context.Context,
 	startDate time.Time,
 	endDate time.Time,
