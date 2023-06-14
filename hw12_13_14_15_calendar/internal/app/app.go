@@ -4,8 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/Al-Sher/hw_otus/hw12_13_14_15_calendar/internal/config"
-	"github.com/Al-Sher/hw_otus/hw12_13_14_15_calendar/internal/logger"
 	"github.com/Al-Sher/hw_otus/hw12_13_14_15_calendar/internal/storage"
 	"github.com/google/uuid"
 )
@@ -32,21 +30,15 @@ type App interface {
 	EventByDay(ctx context.Context, day time.Time) ([]storage.Event, error)
 	EventByWeek(ctx context.Context, day time.Time) ([]storage.Event, error)
 	EventByMonth(ctx context.Context, day time.Time) ([]storage.Event, error)
-	Logger() logger.Logger
-	Config() config.Config
 }
 
 type app struct {
-	logger  logger.Logger
 	storage storage.Storage
-	config  config.Config
 }
 
-func New(logger logger.Logger, storage storage.Storage, config config.Config) App {
+func New(storage storage.Storage) App {
 	return &app{
-		logger:  logger,
 		storage: storage,
-		config:  config,
 	}
 }
 
@@ -103,12 +95,4 @@ func (a *app) EventByWeek(ctx context.Context, day time.Time) ([]storage.Event, 
 
 func (a *app) EventByMonth(ctx context.Context, day time.Time) ([]storage.Event, error) {
 	return a.storage.EventsMonth(ctx, day)
-}
-
-func (a *app) Logger() logger.Logger {
-	return a.logger
-}
-
-func (a *app) Config() config.Config {
-	return a.config
 }
