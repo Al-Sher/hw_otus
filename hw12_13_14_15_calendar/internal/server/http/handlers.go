@@ -10,11 +10,13 @@ import (
 	"time"
 
 	"github.com/Al-Sher/hw_otus/hw12_13_14_15_calendar/internal/app"
+	"github.com/Al-Sher/hw_otus/hw12_13_14_15_calendar/internal/logger"
 	"github.com/Al-Sher/hw_otus/hw12_13_14_15_calendar/internal/storage"
 )
 
 type Handler struct {
-	app app.App
+	app    app.App
+	logger logger.Logger
 }
 
 type result struct {
@@ -51,7 +53,7 @@ func (h *Handler) Handlers(ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if !strings.HasPrefix(r.URL.Path, URLPath) {
 			if err := notFound(w); err != nil {
-				h.app.Logger().Error(err)
+				h.logger.Error(err)
 				return
 			}
 		}
@@ -72,9 +74,9 @@ func (h *Handler) Handlers(ctx context.Context) http.HandlerFunc {
 
 		data, err := json.Marshal(res)
 		if err != nil {
-			h.app.Logger().Error(err)
+			h.logger.Error(err)
 			if err := internalError(w, err); err != nil {
-				h.app.Logger().Error(err)
+				h.logger.Error(err)
 			}
 			return
 		}
@@ -90,11 +92,11 @@ func (h *Handler) Handlers(ctx context.Context) http.HandlerFunc {
 				w.WriteHeader(http.StatusBadRequest)
 			}
 
-			h.app.Logger().Error(res.Error)
+			h.logger.Error(res.Error)
 		}
 
 		if _, err := w.Write(data); err != nil {
-			h.app.Logger().Error(err)
+			h.logger.Error(err)
 		}
 	}
 }

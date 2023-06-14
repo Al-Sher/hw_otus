@@ -80,7 +80,7 @@ func main() {
 	calendar := app.New(s)
 
 	server := internalhttp.NewServer(calendar, logg, c)
-	grpcServer := grpc.NewServer(calendar)
+	grpcServer := grpc.NewServer(calendar, logg, c)
 
 	ctx, cancel := signal.NotifyContext(ctx,
 		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)

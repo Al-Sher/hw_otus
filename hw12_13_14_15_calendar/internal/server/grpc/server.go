@@ -6,6 +6,8 @@ import (
 	"net"
 
 	"github.com/Al-Sher/hw_otus/hw12_13_14_15_calendar/internal/app"
+	"github.com/Al-Sher/hw_otus/hw12_13_14_15_calendar/internal/config"
+	"github.com/Al-Sher/hw_otus/hw12_13_14_15_calendar/internal/logger"
 	"github.com/Al-Sher/hw_otus/hw12_13_14_15_calendar/internal/server/grpc/pb"
 	"github.com/Al-Sher/hw_otus/hw12_13_14_15_calendar/internal/storage"
 	"google.golang.org/grpc"
@@ -16,32 +18,36 @@ import (
 )
 
 type Server struct {
-	app app.App
-	srv *grpc.Server
+	app    app.App
+	config config.Config
+	logger logger.Logger
+	srv    *grpc.Server
 	pb.CalendarServer
 }
 
-func NewServer(app app.App) *Server {
+func NewServer(app app.App, l logger.Logger, c config.Config) *Server {
 	return &Server{
-		app: app,
+		app:    app,
+		config: c,
+		logger: l,
 	}
 }
 
 func (s *Server) Start(ctx context.Context) error {
-	lsn, err := net.Listen("tcp", s.app.Config().GRPCAddr())
+	lsn, err := net.Listen("tcp", s.config.GRPCAddr())
 	if err != nil {
 		return err
 	}
 
 	s.srv = grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
-			UnaryServerRequestLoggerMiddlewareInterceptor(s.app.Logger()),
+			UnaryServerRequestLoggerMiddlewareInterceptor(s.logger),
 		),
 	)
 
 	pb.RegisterCalendarServer(s.srv, s)
 
-	s.app.Logger().Info(fmt.Sprintf("starting grpc server on %s", s.app.Config().GRPCAddr()))
+	s.logger.Info(fmt.Sprintf("starting grpc server on %s", s.config.GRPCAddr()))
 
 	err = s.srv.Serve(lsn)
 	<-ctx.Done()
