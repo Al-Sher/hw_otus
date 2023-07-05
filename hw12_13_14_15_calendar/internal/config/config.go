@@ -31,6 +31,7 @@ type configLogger struct {
 type server struct {
 	HTTPAddr        string  `json:"httpAddr" toml:"httpAddr"`
 	HTTPReadTimeout float64 `json:"httpReadTimeout" toml:"httpReadTimeout"`
+	GRPCAddr        string  `json:"grpcAddr" toml:"grpcAddr"`
 }
 
 type storage struct {
@@ -51,6 +52,7 @@ type Config interface {
 
 	HTTPAddr() string
 	HTTPReadTimeout() float64
+	GRPCAddr() string
 
 	StorageType() string
 	StorageDsn() string
@@ -71,6 +73,10 @@ func (c *config) HTTPAddr() string {
 
 func (c *config) HTTPReadTimeout() float64 {
 	return c.Server.HTTPReadTimeout
+}
+
+func (c *config) GRPCAddr() string {
+	return c.Server.GRPCAddr
 }
 
 func (c *config) StorageDsn() string {

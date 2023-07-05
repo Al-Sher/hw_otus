@@ -6,12 +6,14 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 
 	"github.com/Al-Sher/hw_otus/hw12_13_14_15_calendar/internal/app"
 	"github.com/Al-Sher/hw_otus/hw12_13_14_15_calendar/internal/config"
 	"github.com/Al-Sher/hw_otus/hw12_13_14_15_calendar/internal/logger"
+	"github.com/Al-Sher/hw_otus/hw12_13_14_15_calendar/internal/server/grpc"
 	internalhttp "github.com/Al-Sher/hw_otus/hw12_13_14_15_calendar/internal/server/http"
 	"github.com/Al-Sher/hw_otus/hw12_13_14_15_calendar/internal/storage"
 	memorystorage "github.com/Al-Sher/hw_otus/hw12_13_14_15_calendar/internal/storage/memory"
@@ -78,6 +80,7 @@ func main() {
 	calendar := app.New(s)
 
 	server := internalhttp.NewServer(calendar, logg, c)
+	grpcServer := grpc.NewServer(calendar, logg, c)
 
 	ctx, cancel := signal.NotifyContext(ctx,
 		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
@@ -89,17 +92,45 @@ func main() {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
 		defer cancel()
 
-		if err := server.Stop(ctx); err != nil {
-			logg.Error("failed to stop http server: " + err.Error())
+		if c.HTTPAddr() != "" {
+			if err := server.Stop(ctx); err != nil {
+				logg.Error("failed to stop http server: " + err.Error())
+			}
+		}
+
+		if c.GRPCAddr() != "" {
+			grpcServer.Stop()
 		}
 		logg.Info("calendar is shutdown...")
 	}()
 
 	logg.Info("calendar is running...")
 
-	if err := server.Start(ctx); err != nil {
-		logg.Error("failed to start http server: " + err.Error())
-		cancel()
-		os.Exit(1) //nolint:gocritic
+	wg := sync.WaitGroup{}
+
+	if c.HTTPAddr() != "" {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			if err := server.Start(ctx); err != nil {
+				logg.Error("failed to start http server: " + err.Error())
+				cancel()
+				os.Exit(1)
+			}
+		}()
 	}
+
+	if c.GRPCAddr() != "" {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			if err := grpcServer.Start(ctx); err != nil {
+				logg.Error("failed to start http server: " + err.Error())
+				cancel()
+				os.Exit(1)
+			}
+		}()
+	}
+
+	wg.Wait()
 }

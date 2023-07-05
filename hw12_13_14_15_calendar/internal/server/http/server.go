@@ -29,7 +29,7 @@ func (s *Server) Start(ctx context.Context) error {
 	s.logger.Info("Start server on " + s.config.HTTPAddr())
 	s.srv = &http.Server{
 		Addr:              s.config.HTTPAddr(),
-		Handler:           mux(ctx, s.logger),
+		Handler:           handler(ctx, s.app, s.logger),
 		ReadHeaderTimeout: time.Duration(s.config.HTTPReadTimeout()) * time.Second,
 	}
 
@@ -48,31 +48,10 @@ func (s *Server) Stop(ctx context.Context) error {
 	return s.srv.Shutdown(ctx)
 }
 
-func mux(ctx context.Context, logger logger.Logger) http.Handler {
-	mux := http.NewServeMux()
-	mux.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
-		if request.RequestURI != "/" {
-			if err := notFound(writer); err != nil {
-				logger.Error(err)
-				return
-			}
-			return
-		}
+func handler(ctx context.Context, app app.App, logg logger.Logger) http.Handler {
+	service := NewHandlers(app, logg)
 
-		_, err := writer.Write([]byte("hello-world"))
-		if err != nil {
-			logger.Error(err)
-			return
-		}
-	})
+	h := loggingMiddleware(ctx, service.Handlers(ctx), logg)
 
-	handler := loggingMiddleware(ctx, mux, logger)
-
-	return handler
-}
-
-func notFound(writer http.ResponseWriter) error {
-	writer.WriteHeader(http.StatusNotFound)
-	_, err := writer.Write([]byte("Page not found"))
-	return err
+	return h
 }
