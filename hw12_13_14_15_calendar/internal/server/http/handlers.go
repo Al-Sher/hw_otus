@@ -39,7 +39,7 @@ type EventResult struct {
 	Events []*event `json:"events"`
 }
 
-const URLPath = "/events"
+const urlPath = "/events"
 
 var (
 	ErrNotSupportedMethod = errors.New("unsupported method")
@@ -52,7 +52,7 @@ func NewHandlers(app app.App, l logger.Logger) Handler {
 
 func (h *Handler) Handlers(ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if !strings.HasPrefix(r.URL.Path, URLPath) {
+		if !strings.HasPrefix(r.URL.Path, urlPath) {
 			if err := notFound(w); err != nil {
 				h.logger.Error(err)
 				return
@@ -156,11 +156,11 @@ func (h *Handler) update(ctx context.Context, r *http.Request) result {
 		return result{Error: err}
 	}
 
-	if r.URL.Path == URLPath {
+	if r.URL.Path == urlPath {
 		return result{Error: ErrNotSupportedMethod}
 	}
 
-	id := r.URL.Path[len(URLPath)+1:]
+	id := r.URL.Path[len(urlPath)+1:]
 
 	if err := h.app.UpdateEvent(
 		ctx,
@@ -179,11 +179,11 @@ func (h *Handler) update(ctx context.Context, r *http.Request) result {
 }
 
 func (h *Handler) delete(ctx context.Context, r *http.Request) result {
-	if r.URL.Path == URLPath {
+	if r.URL.Path == urlPath {
 		return result{Error: ErrNotSupportedMethod}
 	}
 
-	id := r.URL.Path[len(URLPath)+1:]
+	id := r.URL.Path[len(urlPath)+1:]
 
 	if err := h.app.DeleteEvent(
 		ctx,
@@ -196,10 +196,10 @@ func (h *Handler) delete(ctx context.Context, r *http.Request) result {
 }
 
 func (h *Handler) get(ctx context.Context, r *http.Request) result {
-	if r.URL.Path == URLPath {
+	if r.URL.Path == urlPath {
 		return result{Error: ErrNotSupportedMethod}
 	}
-	query := strings.Split(r.URL.Path[len(URLPath)+1:], "/")
+	query := strings.Split(r.URL.Path[len(urlPath)+1:], "/")
 	if len(query) != 2 || !contains(query[0], []string{"day", "week", "month"}) {
 		return result{Error: ErrPageNotFound}
 	}
