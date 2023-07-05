@@ -26,12 +26,13 @@ type result struct {
 }
 
 type event struct {
-	ID          string    `json:"id,omitempty"`
-	Title       string    `json:"title"`
-	StartAt     time.Time `json:"startAt"`
-	Duration    float64   `json:"duration"`
-	Description string    `json:"description"`
-	AuthorID    string    `json:"authorId"`
+	ID             string    `json:"id,omitempty"`
+	Title          string    `json:"title"`
+	StartAt        time.Time `json:"startAt"`
+	Duration       float64   `json:"duration"`
+	Description    string    `json:"description"`
+	AuthorID       string    `json:"authorId"`
+	NotificationAt time.Time `json:"notificationAt"`
 }
 
 type EventResult struct {
@@ -141,6 +142,7 @@ func (h *Handler) create(ctx context.Context, r *http.Request) result {
 		time.Duration(e.Duration)*time.Second,
 		e.Description,
 		e.AuthorID,
+		e.NotificationAt,
 	); err != nil {
 		return result{Error: err}
 	}
@@ -168,6 +170,7 @@ func (h *Handler) update(ctx context.Context, r *http.Request) result {
 		time.Duration(e.Duration)*time.Second,
 		e.Description,
 		e.AuthorID,
+		e.NotificationAt,
 	); err != nil {
 		return result{Error: err}
 	}
@@ -250,12 +253,13 @@ func convert(events []storage.Event) []*event {
 	r := make([]*event, 0, len(events))
 	for _, e := range events {
 		eResult := &event{
-			ID:          e.ID,
-			Title:       e.Title,
-			StartAt:     e.StartAt,
-			Duration:    e.EndAt.Sub(e.StartAt).Seconds(),
-			Description: e.Description,
-			AuthorID:    e.AuthorID,
+			ID:             e.ID,
+			Title:          e.Title,
+			StartAt:        e.StartAt,
+			Duration:       e.EndAt.Sub(e.StartAt).Seconds(),
+			Description:    e.Description,
+			AuthorID:       e.AuthorID,
+			NotificationAt: e.NotificationDate,
 		}
 		r = append(r, eResult)
 	}

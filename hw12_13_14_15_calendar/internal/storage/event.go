@@ -11,3 +11,10 @@ type Event struct {
 	AuthorID         string
 	NotificationDate time.Time
 }
+
+type Notification struct {
+	ID       string
+	Title    string
+	Date     time.Time
+	AuthorID string
+}

@@ -18,9 +18,14 @@ var (
 )
 
 const (
-	DefaultPathForLogger = "/dev/stdout"
-	DefaultReadTimeout   = 15
-	DefaultMigrationPath = "./migrations/"
+	DefaultPathForLogger        = "/dev/stdout"
+	DefaultReadTimeout          = 15
+	DefaultMigrationPath        = "./migrations/"
+	DefaultRabbitMQExchangeType = "direct"
+	DefaultSchedulerInterval    = 10
+	DefaultConsumerName         = "calendar-consumer"
+	DefaultQueueName            = "calendar-queue"
+	DefaultClearStorageInterval = 60 * 60
 )
 
 type configLogger struct {
@@ -35,15 +40,27 @@ type server struct {
 }
 
 type storage struct {
-	StorageType   string `json:"storageType" toml:"storageType"`
-	Dsn           string `json:"dsn" toml:"dsn"`
-	MigrationPath string `json:"migrationPath" toml:"migrationPath"`
+	StorageType          string  `json:"storageType" toml:"storageType"`
+	Dsn                  string  `json:"dsn" toml:"dsn"`
+	MigrationPath        string  `json:"migrationPath" toml:"migrationPath"`
+	ClearStorageInterval float64 `json:"clearStorageInterval" toml:"clearStorageInterval"`
 }
 
 type config struct {
-	Logger  configLogger `json:"logger" toml:"logger"`
-	Storage storage      `json:"storage" toml:"storage"`
-	Server  server       `json:"server" toml:"server"`
+	Logger   configLogger `json:"logger" toml:"logger"`
+	Storage  storage      `json:"storage" toml:"storage"`
+	Server   server       `json:"server" toml:"server"`
+	RabbitMQ rabbitmq     `json:"rabbitMq" toml:"rabbitMq"`
+}
+
+type rabbitmq struct {
+	Addr              string  `json:"addr" toml:"addr"`
+	Exchange          string  `json:"exchange" toml:"exchange"`
+	ExchangeType      string  `json:"exchangeType" toml:"exchangeType"`
+	RabbitRoutingKey  string  `json:"rabbitRoutingKey" toml:"rabbitRoutingKey"`
+	SchedulerInterval float64 `json:"schedulerInterval" toml:"schedulerInterval"`
+	ConsumerName      string  `json:"consumerName" toml:"consumerName"`
+	QueueName         string  `json:"queueName" toml:"queueName"`
 }
 
 type Config interface {
@@ -57,6 +74,15 @@ type Config interface {
 	StorageType() string
 	StorageDsn() string
 	MigrationPath() string
+	ClearStorageInterval() float64
+
+	RabbitAddr() string
+	RabbitExchange() string
+	RabbitExchangeType() string
+	RabbitRoutingKey() string
+	SchedulerInterval() float64
+	ConsumerName() string
+	QueueName() string
 }
 
 func (c *config) LoggerLevel() string {
@@ -89,6 +115,38 @@ func (c *config) StorageType() string {
 
 func (c *config) MigrationPath() string {
 	return c.Storage.MigrationPath
+}
+
+func (c *config) ClearStorageInterval() float64 {
+	return c.Storage.ClearStorageInterval
+}
+
+func (c *config) RabbitAddr() string {
+	return c.RabbitMQ.Addr
+}
+
+func (c *config) RabbitExchange() string {
+	return c.RabbitMQ.Exchange
+}
+
+func (c *config) RabbitExchangeType() string {
+	return c.RabbitMQ.ExchangeType
+}
+
+func (c *config) RabbitRoutingKey() string {
+	return c.RabbitMQ.RabbitRoutingKey
+}
+
+func (c *config) SchedulerInterval() float64 {
+	return c.RabbitMQ.SchedulerInterval
+}
+
+func (c *config) ConsumerName() string {
+	return c.RabbitMQ.ConsumerName
+}
+
+func (c *config) QueueName() string {
+	return c.RabbitMQ.QueueName
 }
 
 func NewConfig(path string, format string) (Config, error) {
@@ -164,6 +222,26 @@ func (c *config) setDefaultValues() {
 
 	if c.Storage.MigrationPath == "" {
 		c.Storage.MigrationPath = DefaultMigrationPath
+	}
+
+	if c.RabbitMQ.ExchangeType == "" {
+		c.RabbitMQ.ExchangeType = DefaultRabbitMQExchangeType
+	}
+
+	if c.RabbitMQ.SchedulerInterval == 0 {
+		c.RabbitMQ.SchedulerInterval = DefaultSchedulerInterval
+	}
+
+	if c.RabbitMQ.ConsumerName == "" {
+		c.RabbitMQ.ConsumerName = DefaultConsumerName
+	}
+
+	if c.RabbitMQ.QueueName == "" {
+		c.RabbitMQ.QueueName = DefaultQueueName
+	}
+
+	if c.Storage.ClearStorageInterval == 0 {
+		c.Storage.ClearStorageInterval = DefaultClearStorageInterval
 	}
 }
 

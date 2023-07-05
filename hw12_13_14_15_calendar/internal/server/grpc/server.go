@@ -67,6 +67,7 @@ func (s *Server) Create(ctx context.Context, e *pb.CreateEvent) (*pb.Result, err
 		e.GetDuration().AsDuration(),
 		e.GetDescription(),
 		e.GetAuthorId(),
+		e.GetNotificationAt().AsTime(),
 	)
 	if err != nil {
 		return &pb.Result{}, status.Error(codes.Unknown, err.Error())
@@ -84,6 +85,7 @@ func (s *Server) Update(ctx context.Context, e *pb.UpdateEvent) (*pb.Result, err
 		e.GetEvent().GetDuration().AsDuration(),
 		e.GetEvent().GetDescription(),
 		e.GetEvent().GetAuthorId(),
+		e.GetEvent().GetNotificationAt().AsTime(),
 	)
 	if err != nil {
 		return &pb.Result{}, status.Error(codes.Unknown, err.Error())

@@ -41,11 +41,12 @@ message UpdateEvent {
 }
 
 message CreateEvent {
-  string title = 2;
-  google.protobuf.Timestamp start_at = 3;
-  google.protobuf.Duration duration = 4;
-  string description = 5;
-  string author_id = 6;
+  string title = 1;
+  google.protobuf.Timestamp start_at = 2;
+  google.protobuf.Duration duration = 3;
+  string description = 4;
+  string author_id = 5;
+  google.protobuf.Timestamp notification_at = 6;
 }
 
 message Event {
@@ -55,6 +56,7 @@ message Event {
   google.protobuf.Duration duration = 4;
   string description = 5;
   string author_id = 6;
+  google.protobuf.Timestamp notification_at = 7;
 }
 
 message Result {

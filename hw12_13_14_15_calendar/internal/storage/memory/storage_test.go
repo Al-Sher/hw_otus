@@ -162,3 +162,56 @@ func TestStorage(t *testing.T) {
 		)
 	})
 }
+
+func TestNotification(t *testing.T) {
+	ctx := context.Background()
+	startDateTime1, err := time.Parse(time.RFC3339, "2023-06-01T21:00:00+03:00")
+	require.NoError(t, err)
+	startDateTime2 := time.Now().AddDate(0, 0, 1)
+	require.NoError(t, err)
+	events := []internalStorage.Event{
+		{
+			ID:               "1",
+			Title:            "test",
+			Description:      "test description",
+			StartAt:          startDateTime1,
+			EndAt:            startDateTime1.Add(1 * time.Hour),
+			AuthorID:         "1",
+			NotificationDate: startDateTime1,
+		},
+		{
+			ID:               "2",
+			Title:            "test",
+			Description:      "test description",
+			StartAt:          startDateTime2,
+			EndAt:            startDateTime2.Add(1 * time.Hour),
+			AuthorID:         "1",
+			NotificationDate: startDateTime2,
+		},
+	}
+
+	s := New()
+	t.Run("create events", func(t *testing.T) {
+		for _, v := range events {
+			err := s.CreateEvent(ctx, v)
+			require.NoError(t, err)
+		}
+	})
+	t.Run("check events for notification", func(t *testing.T) {
+		events, err := s.EventsForNotification(ctx)
+		require.NoError(t, err)
+		require.Equal(t, 1, len(events))
+	})
+	t.Run("clear old notification", func(t *testing.T) {
+		var ids []string
+		events, err := s.EventsForNotification(ctx)
+		require.NoError(t, err)
+		require.Equal(t, 1, len(events))
+		ids = append(ids, events[0].ID)
+		err = s.ClearNotificationDates(ctx, ids)
+		require.NoError(t, err)
+		events, err = s.EventsForNotification(ctx)
+		require.NoError(t, err)
+		require.Equal(t, 0, len(events))
+	})
+}

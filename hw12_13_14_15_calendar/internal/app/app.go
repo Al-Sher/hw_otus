@@ -16,6 +16,7 @@ type App interface {
 		duration time.Duration,
 		description string,
 		authorID string,
+		NotificationAt time.Time,
 	) error
 	UpdateEvent(
 		ctx context.Context,
@@ -25,11 +26,13 @@ type App interface {
 		duration time.Duration,
 		description string,
 		authorID string,
+		NotificationAt time.Time,
 	) error
 	DeleteEvent(ctx context.Context, id string) error
 	EventByDay(ctx context.Context, day time.Time) ([]storage.Event, error)
 	EventByWeek(ctx context.Context, day time.Time) ([]storage.Event, error)
 	EventByMonth(ctx context.Context, day time.Time) ([]storage.Event, error)
+	EventsForNotification(ctx context.Context) ([]storage.Notification, error)
 }
 
 type app struct {
@@ -49,16 +52,17 @@ func (a *app) CreateEvent(
 	duration time.Duration,
 	description string,
 	authorID string,
+	notificationAt time.Time,
 ) error {
 	id := uuid.NewString()
-
 	return a.storage.CreateEvent(ctx, storage.Event{
-		ID:          id,
-		Title:       title,
-		StartAt:     startAt,
-		EndAt:       startAt.Add(duration),
-		Description: description,
-		AuthorID:    authorID,
+		ID:               id,
+		Title:            title,
+		StartAt:          startAt,
+		EndAt:            startAt.Add(duration),
+		Description:      description,
+		AuthorID:         authorID,
+		NotificationDate: notificationAt,
 	})
 }
 
@@ -70,14 +74,16 @@ func (a *app) UpdateEvent(
 	duration time.Duration,
 	description string,
 	authorID string,
+	notificationAt time.Time,
 ) error {
 	return a.storage.UpdateEvent(ctx, storage.Event{
-		ID:          id,
-		Title:       title,
-		StartAt:     startAt,
-		EndAt:       startAt.Add(duration),
-		Description: description,
-		AuthorID:    authorID,
+		ID:               id,
+		Title:            title,
+		StartAt:          startAt,
+		EndAt:            startAt.Add(duration),
+		Description:      description,
+		AuthorID:         authorID,
+		NotificationDate: notificationAt,
 	})
 }
 
@@ -95,4 +101,25 @@ func (a *app) EventByWeek(ctx context.Context, day time.Time) ([]storage.Event, 
 
 func (a *app) EventByMonth(ctx context.Context, day time.Time) ([]storage.Event, error) {
 	return a.storage.EventsMonth(ctx, day)
+}
+
+func (a *app) EventsForNotification(ctx context.Context) ([]storage.Notification, error) {
+	events, err := a.storage.EventsForNotification(ctx)
+	if err != nil {
+		return nil, err
+	}
+	notifications := make([]storage.Notification, len(events), 0)
+
+	for _, event := range events {
+		notification := storage.Notification{
+			ID:       event.ID,
+			Title:    event.Title,
+			Date:     event.NotificationDate,
+			AuthorID: event.AuthorID,
+		}
+
+		notifications = append(notifications, notification)
+	}
+
+	return notifications, nil
 }

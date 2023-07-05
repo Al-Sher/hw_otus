@@ -1,12 +1,22 @@
 BIN := "./bin/calendar"
 BIN_MIGRATE := "./bin/migrate"
+BIN_SCHEDULER := "./bin/calendar_scheduler"
+BIN_SENDER := "./bin/calendar_sender"
 DOCKER_IMG="calendar:develop"
 
 GIT_HASH := $(shell git log --format="%h" -n 1)
 LDFLAGS := -X main.release="develop" -X main.buildDate=$(shell date -u +%Y-%m-%dT%H:%M:%S) -X main.gitHash=$(GIT_HASH)
 
-build:
+build-app:
 	go build -v -o $(BIN) -ldflags "$(LDFLAGS)" ./cmd/calendar
+
+build-scheduler:
+	go build -v -o $(BIN_SCHEDULER) -ldflags "$(LDFLAGS)" ./cmd/scheduler
+
+build-sender:
+	go build -v -o $(BIN_SENDER) -ldflags "$(LDFLAGS)" ./cmd/sender
+
+build: build-app build-scheduler build-sender
 
 run: build
 	$(BIN) -config ./configs/config.toml
