@@ -9,19 +9,16 @@ import (
 	internalStorage "github.com/Al-Sher/hw_otus/hw12_13_14_15_calendar/internal/storage"
 )
 
-const Type string = "inMemory"
+const (
+	Type       string = "inMemory"
+	dateLayout string = "2006-01-02"
+)
 
 type storage struct {
 	events         map[string]internalStorage.Event
 	eventIdsByDate map[string]map[string]struct{}
+	sendingEvents  map[string]struct{}
 	mu             sync.RWMutex
-}
-
-type Notification struct {
-	ID       string
-	Title    string
-	Date     time.Time
-	AuthorID string
 }
 
 func New() internalStorage.Storage {
@@ -29,6 +26,7 @@ func New() internalStorage.Storage {
 		mu:             sync.RWMutex{},
 		events:         make(map[string]internalStorage.Event),
 		eventIdsByDate: make(map[string]map[string]struct{}),
+		sendingEvents:  make(map[string]struct{}),
 	}
 }
 
@@ -145,6 +143,44 @@ func (s *storage) eventsByDates(
 	}
 
 	return result, nil
+}
+
+func (s *storage) EventsForNotification(_ context.Context) ([]internalStorage.Event, error) {
+	res := make([]internalStorage.Event, 0)
+	for _, event := range s.events {
+		if _, ok := s.sendingEvents[event.ID]; !ok && event.NotificationDate.Before(time.Now()) {
+			res = append(res, event)
+		}
+	}
+
+	return res, nil
+}
+
+func (s *storage) ClearNotificationDates(_ context.Context, ids []string) error {
+	for _, id := range ids {
+		s.sendingEvents[id] = struct{}{}
+	}
+
+	return nil
+}
+
+func (s *storage) ClearOldEvents(_ context.Context) error {
+	dateClear := time.Now().AddDate(-1, 0, 0)
+	for dateStr, events := range s.eventIdsByDate {
+		t, err := time.Parse(dateLayout, dateStr)
+		if err != nil {
+			return err
+		}
+		if t.Before(dateClear) {
+			for id := range events {
+				delete(s.events, id)
+				delete(s.sendingEvents, id)
+			}
+			delete(s.eventIdsByDate, dateStr)
+		}
+	}
+
+	return nil
 }
 
 func (s *storage) Connect(_ context.Context, _ string) error {

@@ -15,13 +15,6 @@ type storage struct {
 	conn *pgx.Conn
 }
 
-type Notification struct {
-	ID       string
-	Title    string
-	Date     time.Time
-	AuthorID string
-}
-
 func New() internalStorage.Storage {
 	return &storage{}
 }
@@ -144,6 +137,53 @@ func (s *storage) EventsMonth(ctx context.Context, date time.Time) ([]internalSt
 	endDate := time.Date(year, month+1, day, 23, 59, 59, 999, time.UTC)
 
 	return s.eventsByDates(ctx, startDate, endDate)
+}
+
+func (s *storage) EventsForNotification(ctx context.Context) ([]internalStorage.Event, error) {
+	result := make([]internalStorage.Event, 0)
+
+	sql := `SELECT id, title, start_at, end_at, description, author_id, notification_date 
+	FROM events 
+	WHERE notification_date IS NOT NULL AND notification_date < NOW()`
+
+	rows, err := s.conn.Query(ctx, sql)
+	if err != nil {
+		return result, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		event := internalStorage.Event{}
+		if err := rows.Scan(
+			&event.ID,
+			&event.Title,
+			&event.StartAt,
+			&event.EndAt,
+			&event.Description,
+			&event.AuthorID,
+			&event.NotificationDate,
+		); err != nil {
+			return nil, err
+		}
+
+		result = append(result, event)
+	}
+
+	return result, nil
+}
+
+func (s *storage) ClearNotificationDates(ctx context.Context, ids []string) error {
+	sql := `UPDATE events SET notification_date = NULL WHERE id = ANY($1)`
+
+	_, err := s.conn.Exec(ctx, sql, ids)
+	return err
+}
+
+func (s *storage) ClearOldEvents(ctx context.Context) error {
+	sql := `DELETE FROM events WHERE start_at < NOW()- interval '1 year'`
+
+	_, err := s.conn.Exec(ctx, sql)
+	return err
 }
 
 func (s *storage) eventsByDates(

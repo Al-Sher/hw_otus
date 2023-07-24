@@ -18,6 +18,9 @@ type Storage interface {
 	EventsDay(ctx context.Context, date time.Time) ([]Event, error)
 	EventsWeek(ctx context.Context, date time.Time) ([]Event, error)
 	EventsMonth(ctx context.Context, date time.Time) ([]Event, error)
+	EventsForNotification(ctx context.Context) ([]Event, error)
+	ClearNotificationDates(ctx context.Context, id []string) error
+	ClearOldEvents(ctx context.Context) error
 	Connect(ctx context.Context, dsn string) error
 	Close(ctx context.Context) error
 }
