@@ -1,0 +1,20 @@
+{
+  "logger": {
+    "level": "debug"
+  },
+  "server": {
+    "httpAddr": ":8080",
+    "httpReadTimeout": 10,
+    "grpcAddr": ":8081"
+  },
+  "storage": {
+    "storageType": "pgsql",
+    "dsn": "postgres://app_user:app_password@localhost:5432/calendar?sslmode=disable",
+    "migrationPath": "./migrations/"
+  },
+  "rabbitMq": {
+    "addr": "amqp://localhost:5672",
+    "exchange": "calendar",
+    "exchangeType": "direct"
+  }
+}
